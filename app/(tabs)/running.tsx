@@ -13,7 +13,6 @@ export default function RunningScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -21,30 +20,20 @@ export default function RunningScreen() {
   // Stats
   const [time, setTime] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0);
-  const [calories, setCalories] = useState<number>(0);
+  // const [calories, setCalories] = useState<number>(0);
   const [speed, setSpeed] = useState<number>(0);
   //#endregion
 
   //#region Functions
-  useEffect(() => {
-    permissions();
-    const initLocation = async () => {
-      await getLocation();
-    };
-    initLocation();
-  },[]);
-
   const permissions = async () => {
     let { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
     if (foregroundStatus !== 'granted') {
-      setErrorMsg('Permission to access location was denied.');
       Alert.alert('Erreur', 'Permission to access location was denied.');
       return;
     }
   
     let { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
     if (backgroundStatus !== 'granted') {
-      setErrorMsg('Permission to access background location was denied.');
       Alert.alert('Erreur', 'Permission to access background location was denied.');
       return;
     }
@@ -67,8 +56,6 @@ export default function RunningScreen() {
         longitudeDelta: 0.01,
       });
     }
-  
-    setMarker({ latitude, longitude });
   };  
 
   // Calculer la distance entre deux points GPS
@@ -90,9 +77,11 @@ export default function RunningScreen() {
 
   const updateLocationAndStats = async () => {
     try {
-      await getLocation();
-      const { latitude, longitude } = location.coords;
-
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const { latitude, longitude } = loc.coords;
+  
       if (path.length > 0) {
         const lastPoint = path[path.length - 1];
         const newDistance = haversine(
@@ -101,24 +90,40 @@ export default function RunningScreen() {
           latitude,
           longitude
         );
-        
+  
+        // Ajout de la nouvelle distance à la distance totale
         setDistance((prev) => prev + parseFloat((newDistance / 1000).toFixed(2))); // Convertir en Km
-        console.log('Distance: ', distance);
-        setSpeed((newDistance / 1000) / (time / 3600)); // Km/hr
+        console.log(`Distance (m): ${newDistance}, Total (km): ${distance + newDistance / 1000}`);
+  
+        // Calculer la vitesse en Km/h
+        if (time > 0) {
+          setSpeed(
+            parseFloat(
+            (((distance + newDistance / 1000) / time) * 3600).toFixed(2)
+          )
+          );
+        }
       }
-
+  
+      // Ajouter le nouveau point au chemin
       setPath((prev) => [...prev, { latitude, longitude }]);
+      setMarker({ latitude, longitude }); // Mettre à jour le marqueur
     } catch (err) {
-      console.error(err);
+      console.error('Erreur lors de la mise à jour de la localisation :', err);
     }
   };
+  
   //#endregion
 
   //#region UseEffects
   // Démarrer le podomètre
   useEffect(() => {
-    getLocation();
-  }, []);
+    permissions();
+    const initLocation = async () => {
+      await getLocation();
+    };
+    initLocation();
+  },[]);
 
   // Centrer la carte sur la position actuelle
   useEffect(() => {
@@ -136,23 +141,30 @@ export default function RunningScreen() {
   // Timer
   useEffect(() => {    
     let interval: NodeJS.Timeout;
-    let interval2: NodeJS.Timeout;
     if (isRunning) {
       interval = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
-
-      interval2 = setInterval(updateLocationAndStats, 3000);
     }
     else {
       // Reset stats
       // Récupérer les données et les enregistrer
+      // setMarker({location.coords.latitude, location.coords.longitude});
     }
     return () => {
       clearInterval(interval);
-      clearInterval(interval2)
     }; // Nettoyage à l'arrêt
   }, [isRunning]);
+
+  useEffect(() => {
+    let interval2: NodeJS.Timeout;
+    if (isRunning) {
+      interval2 = setInterval(updateLocationAndStats, 1000);
+    } else {
+    }
+    return () => clearInterval(interval2); // Nettoyage
+  }, [isRunning, path, distance, time]);
+  
   //#endregion
 
   return (
@@ -178,9 +190,13 @@ export default function RunningScreen() {
               showsUserLocation={true}
               zoomEnabled={true}
             >
-              {
-                marker && <Marker id={marker.latitude.toString()} coordinate={{ latitude: marker.latitude, longitude: marker.longitude }} />
-              }
+              {/* Affichage des points et du chemin */}
+              {path.map((point, index) => (
+                <Marker
+                  key={index}
+                  coordinate={point}
+                />
+              ))}
               <Polyline coordinates={path} strokeColor="blue" strokeWidth={4} />
           </MapView>
           
@@ -221,7 +237,8 @@ export default function RunningScreen() {
                   <View style={[styles.runningDataCol, styles.runningBorderRight]}>
                       <FontAwesomeIcon icon={faFire} size={24} />
                       <View style={styles.runningDataColitem}>
-                        <ThemedText type='subtitle'>{calories}</ThemedText>
+                        {/* <ThemedText type='subtitle'>{calories}</ThemedText> */}
+                        <ThemedText type='subtitle'>0</ThemedText>
                         <ThemedText type='defaultSemiBold'>Kcal</ThemedText>
                       </View>
                   </View>
