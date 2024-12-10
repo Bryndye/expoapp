@@ -28,6 +28,10 @@ export default function RunningScreen() {
   //#region Functions
   useEffect(() => {
     permissions();
+    const initLocation = async () => {
+      await getLocation();
+    };
+    initLocation();
   },[]);
 
   const permissions = async () => {
@@ -52,6 +56,7 @@ export default function RunningScreen() {
     });
   
     setLocation(loc);
+    console.log('Location: ', loc);
     const { latitude, longitude } = loc.coords;
   
     if (mapRef.current) {
@@ -96,8 +101,8 @@ export default function RunningScreen() {
           latitude,
           longitude
         );
-
-        setDistance((prev) => prev + newDistance / 1000); // Convertir en Km
+        
+        setDistance((prev) => prev + parseFloat((newDistance / 1000).toFixed(2))); // Convertir en Km
         console.log('Distance: ', distance);
         setSpeed((newDistance / 1000) / (time / 3600)); // Km/hr
       }
@@ -131,26 +136,23 @@ export default function RunningScreen() {
   // Timer
   useEffect(() => {    
     let interval: NodeJS.Timeout;
+    let interval2: NodeJS.Timeout;
     if (isRunning) {
       interval = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
+
+      interval2 = setInterval(updateLocationAndStats, 3000);
     }
     else {
       // Reset stats
       // Récupérer les données et les enregistrer
     }
-    return () => clearInterval(interval); // Nettoyage à l'arrêt
+    return () => {
+      clearInterval(interval);
+      clearInterval(interval2)
+    }; // Nettoyage à l'arrêt
   }, [isRunning]);
-  
-  // Mise à jour de la position et des statistiques
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      interval = setInterval(updateLocationAndStats, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, path, time]);
   //#endregion
 
   return (
