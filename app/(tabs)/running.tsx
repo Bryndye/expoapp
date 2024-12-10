@@ -92,8 +92,9 @@ export default function RunningScreen() {
         );
   
         // Ajout de la nouvelle distance à la distance totale
+        console.log(`Distance (m): ${parseFloat((newDistance / 1000).toFixed(2))}`);
         setDistance((prev) => prev + parseFloat((newDistance / 1000).toFixed(2))); // Convertir en Km
-        console.log(`Distance (m): ${newDistance}, Total (km): ${distance + newDistance / 1000}`);
+        console.log(`Distance (m): ${newDistance}, Total (km): ${distance/1000}`);
   
         // Calculer la vitesse en Km/h
         if (time > 0) {
@@ -113,6 +114,15 @@ export default function RunningScreen() {
     }
   };
   
+  const saveRunData = () => {
+    const runData = {
+      distance,
+      time,
+      speed,
+      path,
+    };
+    console.log('Run data saved:', runData);
+  };
   //#endregion
 
   //#region UseEffects
@@ -147,9 +157,8 @@ export default function RunningScreen() {
       }, 1000);
     }
     else {
-      // Reset stats
       // Récupérer les données et les enregistrer
-      // setMarker({location.coords.latitude, location.coords.longitude});
+      saveRunData();
     }
     return () => {
       clearInterval(interval);
@@ -191,12 +200,12 @@ export default function RunningScreen() {
               zoomEnabled={true}
             >
               {/* Affichage des points et du chemin */}
-              {path.map((point, index) => (
+              {/* {path.map((point, index) => (
                 <Marker
                   key={index}
                   coordinate={point}
                 />
-              ))}
+              ))} */}
               <Polyline coordinates={path} strokeColor="blue" strokeWidth={4} />
           </MapView>
           
