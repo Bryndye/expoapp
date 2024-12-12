@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       alignItems: 'center',
       backgroundColor: '#5D63D1',
+      borderRadius: 40,
     },
     widgetSessionColumn: {
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
       alignItems: 'flex-start',
     },
     widgetSessionIcon:{
@@ -80,6 +80,22 @@ const styles = StyleSheet.create({
       borderRadius: '100%',
       height: 50,
       width: 50,
+    },
+    contentRunData:{
+      width: '100%',
+      height: 100,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexDirection: 'row',
+      padding:8,
+      boxShadow: '0 1px 0 0 rgba(0,0,0,0.2)',
+    },
+    mapRunData:{
+      height:'100%', 
+      width:80, 
+      backgroundColor:'red',
+      borderRadius: 15,
     },
 
     runningScreen:{

@@ -1,27 +1,27 @@
 import { Image, StyleSheet, Platform, View, TouchableOpacity} from 'react-native';
-
+import { useEffect, useState } from 'react';
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import {
-  Accelerometer,
-  Barometer,
-  DeviceMotion,
-  Gyroscope,
-  LightSensor,
-  Magnetometer,
-  MagnetometerUncalibrated,
-  Pedometer,
-} from 'expo-sensors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import styles from '@/components/Style';
 export default function HomeScreen() {
-  DeviceMotion.addListener((data) => {
-      // console.log(data);
-    }
-  );
   const router = useRouter();
+
+  const [runData, setRunData] = useState<any[]>([]);
+
+  const geData = async () => {
+    const storedData = await AsyncStorage.getItem('runData');
+    if (storedData) {
+      setRunData(JSON.parse(storedData));
+    }
+  }
+  useEffect(() => {
+    geData();
+  }
+  , []);
 
   return (
     <ParallaxScrollView
@@ -39,46 +39,47 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.widgetSessionColumn}>
-              <ThemedText>Current Jogging</ThemedText>
-              <ThemedText>01:01:01</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>Current Jogging</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>01:01:01</ThemedText>
             </View>
 
             <View style={styles.widgetSessionColumn}>
-              <ThemedText>10.9 km</ThemedText>
-              <ThemedText>540 kcal</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>10.9 km</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>540 kcal</ThemedText>
             </View>
         </TouchableOpacity>
 
+        {/* Header activities */}
+        <View style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width:'100%'}}>
+          <ThemedText style={{maxWidth:'50%'}}>
+            Recent Activity
+          </ThemedText> 
+
+          <ThemedText style={{maxWidth:'50%'}}>
+            All
+          </ThemedText> 
+        </View>
+
         <ThemedView style={styles.widgetArea}>
-          <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-          <ThemedText>
-            Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-            Press{' '}
-            <ThemedText type="defaultSemiBold">
-              {Platform.select({
-                ios: 'cmd + d',
-                android: 'cmd + m',
-                web: 'F12'
-              })}
-            </ThemedText>{' '}
-            to open developer tools.
-          </ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.widgetArea}>
-          <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          <ThemedText>
-            Tap the Explore tab to learn more about what's included in this starter app.
-          </ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.widgetArea}>
-          <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-          <ThemedText>
-            When you're ready, run{' '}
-            <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-            <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-            <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-            <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-          </ThemedText>
+          {runData && (
+            runData.map((run: any, index: number) => (
+              <View key={index} style={styles.contentRunData}>
+                <View style={{height:'100%', maxWidth:'50%', display:'flex', flexDirection:'row', gap:'14'}}>
+                  <View style={styles.mapRunData}>BLOC</View>
+                  <View style={{height:'100%',maxWidth:'40%', display:'flex', flexDirection:'column', justifyContent:'space-between'}}>
+                    <ThemedText >{run['date'] ?? 'No date'}</ThemedText>
+                    <ThemedText type='bold' >{run['distance']} km</ThemedText>
+                    <View style={{ width: '100%',display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
+                      <ThemedText >{run['calories'] ?? 0} kcal</ThemedText>
+                      <ThemedText >{run['speed']} km/h</ThemedText>
+                    </View>
+                  </View>
+                </View>
+                <ThemedText type='bold' >{'>'}</ThemedText>
+              </View>
+            ))
+            )
+          }
         </ThemedView>
 
     </ParallaxScrollView>

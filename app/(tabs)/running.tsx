@@ -7,26 +7,30 @@ import styles from '@/components/Style';
 import MapView, { Polyline, Marker, LatLng } from 'react-native-maps';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlay, faPause, faRunning, faFire, faBolt, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RunningScreen() {
   //#region Variables
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
+  const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [location, setLocation] = useState<Location.LocationObject | any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [marker, setMarker] = useState<LatLng>();
+  const [markerEnd, setMarkerEnd] = useState<LatLng>();
+  const [markerStart, setMarkerStart] = useState<LatLng>();
   // Stats
   const [time, setTime] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0);
-  // const [calories, setCalories] = useState<number>(0);
+  const [calories, setCalories] = useState<number>(0);
   const [speed, setSpeed] = useState<number>(0);
   //#endregion
 
   //#region Functions
   const permissions = async () => {
     let { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+    setHasPermission(false);
     if (foregroundStatus !== 'granted') {
       Alert.alert('Erreur', 'Permission to access location was denied.');
       return;
@@ -37,6 +41,8 @@ export default function RunningScreen() {
       Alert.alert('Erreur', 'Permission to access background location was denied.');
       return;
     }
+
+    setHasPermission(true);
   }
 
   const getLocation = async () => {
@@ -45,6 +51,7 @@ export default function RunningScreen() {
     });
   
     setLocation(loc);
+    setMarkerStart({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
     console.log('Location: ', loc);
     const { latitude, longitude } = loc.coords;
   
@@ -108,20 +115,31 @@ export default function RunningScreen() {
   
       // Ajouter le nouveau point au chemin
       setPath((prev) => [...prev, { latitude, longitude }]);
-      setMarker({ latitude, longitude }); // Mettre à jour le marqueur
+      setMarkerEnd({ latitude, longitude }); // Mettre à jour le marqueur
     } catch (err) {
       console.error('Erreur lors de la mise à jour de la localisation :', err);
     }
   };
   
-  const saveRunData = () => {
+  const saveRunData = async () => {
     const runData = {
       distance,
       time,
       speed,
       path,
+      calories,
+      date: new Date().toISOString(),
     };
+    if (time === 0 || path.length === 0 && distance === 0) return;
     console.log('Run data saved:', runData);
+    try {
+      const storedData = await AsyncStorage.getItem('runData');
+      const parsedData = storedData ? JSON.parse(storedData) : [];
+      const updatedArray = [...parsedData, runData];
+      await AsyncStorage.setItem('runData', JSON.stringify(updatedArray));
+    } catch (error) {
+      console.error('Erreur lors du chargement des données :', error);
+    }
   };
   //#endregion
 
@@ -199,13 +217,19 @@ export default function RunningScreen() {
               showsUserLocation={true}
               zoomEnabled={true}
             >
-              {/* Affichage des points et du chemin */}
-              {/* {path.map((point, index) => (
-                <Marker
-                  key={index}
-                  coordinate={point}
-                />
-              ))} */}
+              {markerStart && 
+                <Marker coordinate={markerStart}>
+                    <View>
+                      <ThemedText>Start</ThemedText>
+                    </View>
+                </Marker>}
+
+              {markerEnd && 
+                <Marker coordinate={markerEnd}>
+                    <View>
+                      <ThemedText>End</ThemedText>
+                    </View>
+                </Marker>}
               <Polyline coordinates={path} strokeColor="blue" strokeWidth={4} />
           </MapView>
           
@@ -216,7 +240,7 @@ export default function RunningScreen() {
                   <FontAwesomeIcon icon={faArrowLeft} size={24} color={'white'} />
                 </TouchableOpacity>
                 <ThemedText>Current Jogging</ThemedText>
-                <ThemedText>GPS on</ThemedText>
+                <ThemedText>GPS {hasPermission ? 'On' : 'Off'}</ThemedText>
             </View>
           </View>
 
