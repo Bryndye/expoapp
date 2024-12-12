@@ -16,6 +16,7 @@ export default function RunningScreen() {
 
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [location, setLocation] = useState<Location.LocationObject | any>(null);
+  const [startLocation, setStartLocation] = useState<Location.LocationObject | any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [markerEnd, setMarkerEnd] = useState<LatLng>();
@@ -51,6 +52,7 @@ export default function RunningScreen() {
     });
   
     setLocation(loc);
+    setStartLocation(loc);
     setMarkerStart({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
     console.log('Location: ', loc);
     const { latitude, longitude } = loc.coords;
@@ -128,15 +130,17 @@ export default function RunningScreen() {
       speed,
       path,
       calories,
+      startLocation,
       date: new Date().toISOString(),
     };
     if (time === 0 || path.length === 0 && distance === 0) return;
-    console.log('Run data saved:', runData);
+
     try {
       const storedData = await AsyncStorage.getItem('runData');
       const parsedData = storedData ? JSON.parse(storedData) : [];
       const updatedArray = [...parsedData, runData];
       await AsyncStorage.setItem('runData', JSON.stringify(updatedArray));
+      console.log('Run data saved');
     } catch (error) {
       console.error('Erreur lors du chargement des données :', error);
     }
@@ -236,11 +240,11 @@ export default function RunningScreen() {
           {/* Header */}
           <View style={{padding:32, width:'100%'}}>
             <View style={styles.runningHeader}>
-                <TouchableOpacity style={[styles.widgetArea, styles.button]} onPress={() => router.push('/explore')}>
+                <TouchableOpacity style={[styles.widgetArea, styles.button]} onPress={() => router.back()}>
                   <FontAwesomeIcon icon={faArrowLeft} size={24} color={'white'} />
                 </TouchableOpacity>
                 <ThemedText>Current Jogging</ThemedText>
-                <ThemedText>GPS {hasPermission ? 'On' : 'Off'}</ThemedText>
+                <ThemedText style={{borderRadius:20, backgroundColor:'white', padding:4}}>GPS {hasPermission ? 'On' : 'Off'}</ThemedText>
             </View>
           </View>
 
