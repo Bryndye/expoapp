@@ -14,6 +14,8 @@ export default function RunningScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
+  const userWeight = 70; // Poids de l'utilisateur en kg
+
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [location, setLocation] = useState<Location.LocationObject | any>(null);
   const [startLocation, setStartLocation] = useState<Location.LocationObject | any>(null);
@@ -101,10 +103,10 @@ export default function RunningScreen() {
         );
   
         // Ajout de la nouvelle distance à la distance totale
-        console.log(`Distance (m): ${parseFloat((newDistance / 1000).toFixed(2))}`);
-        setDistance((prev) => prev + parseFloat((newDistance / 1000).toFixed(2))); // Convertir en Km
-        console.log(`Distance (m): ${newDistance}, Total (km): ${distance/1000}`);
-  
+        const newDistanceKm = newDistance / 1000; // Convertir en Km
+        setDistance((prev) => prev + parseFloat(newDistanceKm.toFixed(2))); // Convertir en Km
+        const newCalories = newDistanceKm * userWeight * 1; // Facteur de calories = 1 kcal/kg/km
+        setCalories((prev) => prev + parseFloat(newCalories.toFixed(2)));
         // Calculer la vitesse en Km/h
         if (time > 0) {
           setSpeed(
@@ -181,6 +183,11 @@ export default function RunningScreen() {
     else {
       // Récupérer les données et les enregistrer
       saveRunData();
+      // Réinitialiser les données
+      setTime(0);
+      setDistance(0);
+      setPath([]);
+      setMarkerStart(undefined);
     }
     return () => {
       clearInterval(interval);
