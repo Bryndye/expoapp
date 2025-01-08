@@ -27,6 +27,7 @@ export default function HomeScreen() {
 
   const geData = async () => {
     const storedData = await AsyncStorage.getItem('runData');
+    // AsyncStorage.clear();
     if (storedData) {
       setRunData(JSON.parse(storedData));
     }
@@ -53,12 +54,12 @@ export default function HomeScreen() {
 
             <View style={styles.widgetSessionColumn}>
               <ThemedText style={{color:'#F3F7FF'}}>Current Jogging</ThemedText>
-              <ThemedText style={{color:'#F3F7FF'}}>01:01:01</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>00:00:00</ThemedText>
             </View>
 
             <View style={styles.widgetSessionColumn}>
-              <ThemedText style={{color:'#F3F7FF'}}>10.9 km</ThemedText>
-              <ThemedText style={{color:'#F3F7FF'}}>540 kcal</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>0 km</ThemedText>
+              <ThemedText style={{color:'#F3F7FF'}}>0 kcal</ThemedText>
             </View>
         </TouchableOpacity>
 
@@ -98,10 +99,10 @@ export default function HomeScreen() {
                       <Polyline coordinates={run['path']} strokeColor="blue" strokeWidth={4} />
                   </MapView>
                   <View style={{height:'100%',maxWidth:'60%', display:'flex', flexDirection:'column', justifyContent:'space-between'}}>
-                    <ThemedText >{run['date'] ?? 'No date'}</ThemedText>
+                    <ThemedText >{new Date(run.date).toLocaleDateString('fr-FR') ?? 'No date'}</ThemedText>
                     <ThemedText type='bold' >{run.distance} km</ThemedText>
                     <View style={{ width: '100%',display:'flex', flexDirection:'row', justifyContent:'space-between', gap:'12'}}>
-                      <ThemedText >{run.calories ?? 0} kcal</ThemedText>
+                      <ThemedText >{run.calories.toFixed(2) ?? 0} kcal</ThemedText>
                       <ThemedText >{run.speed} km/h</ThemedText>
                     </View>
                   </View>

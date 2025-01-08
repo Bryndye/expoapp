@@ -142,6 +142,11 @@ export default function RunningScreen() {
       const parsedData = storedData ? JSON.parse(storedData) : [];
       const updatedArray = [...parsedData, runData];
       await AsyncStorage.setItem('runData', JSON.stringify(updatedArray));
+      updatedArray.forEach((run) => {
+        if (run.distance === 0) {
+          console.log('Distance is 0 for run:', run);
+        }
+      });
       console.log('Run data saved');
     } catch (error) {
       console.error('Erreur lors du chargement des données :', error);
